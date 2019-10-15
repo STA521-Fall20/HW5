@@ -1,0 +1,12 @@
+box: merliseclyde/predictive-modeling:latest
+no-response-timeout: 240
+build:
+  steps:
+    - script:
+        name: Render R markdown
+        code: |
+          Rscript -e "library(rmarkdown);render('HW5.Rmd')"
+    - script:
+        name: Check for allowed files
+        code: |
+          Rscript -e "source('https://raw.githubusercontent.com/STA521-F18/hw5/master/HW5_whitelist.R')"

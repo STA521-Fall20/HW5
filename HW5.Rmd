@@ -1,0 +1,263 @@
+---
+title: 'HW5: Team [my team #/name here]'
+author: '[My team member names here]'
+date: " "
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+
+```{r setup, warning=FALSE, echo=FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+suppressMessages(library(ggplot2))
+suppressMessages(library(dplyr))
+suppressMessages(library(GGally))
+library(ISLR)
+library(ROCR)
+library(BAS)
+library(knitr)
+# post on piazza for additional packages if there are wercker build errors due to missing packages
+
+```
+
+
+We have seen that as the number of features in a model increases, the training error will necessarily decrease, but the test error may not.  
+For this assignment we will explore this using simulation of data to compare methods for estimation and model selection and then a real example.
+
+
+First make sure you have a definition of RMSE
+
+```{r def-rmse}
+rmse = function(obs, pred) { sqrt(sum((obs - pred)^2)/length(obs))}
+```
+
+
+1.  Generate a dataset with $p = 20$ features and $n=1000$ as follows:
+First let's set our random seed in case we need to rerun parts later.
+
+```{r jenny, echo=TRUE}
+# set the random seed so that we can replicate results.
+set.seed(8675309)
+```
+
+In order to simulate data, we need to specify the values of the  "true" parameters.  For this study we will use
+
+```{r true}
+# true parameters
+sigma = 2.5
+betatrue = c(1,2,0,0,0,-1,0,1.5, 0,0,0,1,0,.5,0,0,0,0,-1,1.5,3.5)
+#          int|    X1                            | X2     |X3 
+
+truemodel = betatrue != 0
+```
+
+
+
+Generate Data with correlated columns.
+```{r data, cache=TRUE} 
+
+#sample size
+n = 1000
+
+# generate some standard normals
+  Z = matrix(rnorm(n*10, 0, 1), ncol=10, nrow=n)
+  
+#  Create X1 by taking linear cominations of Z to induce correlation among X1 components
+  
+  X1 = cbind(Z, 
+             (Z[,1:5] %*% c(.3, .5, .7, .9, 1.1) %*% t(rep(1,5)) +
+             matrix(rnorm(n*5, 0, 1), ncol=5, nrow=n))
+             )
+# generate X2 as a standard normal  
+  X2 <- matrix(rnorm(n*4,0,1), ncol=4, nrow=n)
+  
+# Generate X3 as a linear combination of X2 and noise  
+  X3 <- X2[,4]+rnorm(n,0,sd=0.1)
+  
+# combine them  
+  X <- cbind(X1,X2,X3)
+
+# Generate mu     
+# X does not have a column of ones for the intercept so need to add the intercept  
+# for true mu  
+mu = betatrue[1] + X %*% betatrue[-1] 
+  
+# now generate Y  
+Y = mu + rnorm(n,0,sigma)  
+  
+# make a dataframe and save it
+df = data.frame(Y, X, mu)
+```
+
+
+
+
+
+
+2. Split your data set into a training set containing $200$ observations and a test set containing $700$ observations.  Before splitting reset the random seed based on your team number
+```{r new-seed}
+set.seed(0)   # replace 0 with team number before runing
+train = sample(1:900, size=200, rep=FALSE)
+```
+
+
+
+
+
+3.  Using Ordinary Least squares based on fitting the full model for the training data,  compute the average RMSE for a) estimating $\beta_{true}$, b) estimating $\mu_{true} = X_{\text{test}} \beta_{true}$ and c) out of sample prediction of $Y_{test}$ for the test data.
+Note for a vector of length $d$, RMSE is defined as
+$$
+RMSE(\hat{\theta}) = \sqrt{\sum_{i = 1}^{d} (\hat{\theta}_j - \theta_j)^2/d}
+$$
+Provide Confidence/prediction intervals for $\beta$, and $\mu$, and $Y$ in the test data and report what percent of the intervals contain the true values.  Do any estimates seem surprising?
+
+
+3. Perform best subset selection on the training data  and plot the training set RMSE for fitting associated with the best model ($R^2$) of each size.  See Section 6.5.1 in ISLR.
+
+
+
+4. Plot the test set RMSE for prediction associated with the best model of each size.   For which model size does the test set RMSE take on its minimum value?  Comment on your results.  If it takes on its minimum value for a model withonly an intercept or a model containing all of the predictors, adjust $\sigma$ used in generating the data until the test set RMSE is minimized for an intermediate point.
+
+5.  How does the model at which the test set RMSE is minimized compare to the true model used to generate the data?  Comment on the coefficient values and confidence intervals obtained from using all of the data.  Do the intervals include the true values?
+
+6.  Use AIC with stepwise or all possible subsets  to select a model based on the training data and then use OLS to estimate the parameters under that model.  Using the estimates to compute the RMSE for a) estimating $\beta^{true}$, b) estimating $\mu_{true}$ in the test data, and c) predicting $Y_{test}$. For prediction, does this find the best model in terms of RMSE? Does AIC find the true model?  Comment on your findings.
+
+
+
+7.   Use BIC with either stepwise or all possible subsets to select a model and then use OLS to estimate the parameters under that model.  Use the estimates to compute the RMSE for a) estimating $\beta^{true}$, b) $\mu_{true}$ for the test data, and c) predicting $Y_{test}$.   For prediction, does this find the best model in terms of RMSE? Does BIC find the true model?  Comment on your findings.
+
+8.  Take a look at the summaries from the estimates under the best AIC and BIC models fit to the training data. Create confidence intervals for the $\beta$'s and comment on whether they include zero or not or the true value.  (Provide a graph) 
+
+10. Provide a paragraph  summarizing your findings and any recommendations for model selection and inference for the tasks of prediction of future data, estimation of parameters or selecting the true model.
+
+
+
+11. This problem uses the `Caravan` data from the package `ISLR`. To start reset your random seed based on your group number. 
+```{r}
+data(Caravan, package="ISLR")
+set.seed(0)  #update
+test= 1:1000
+train = -test
+
+```
+
+
+Divide the data into into a training and test data set.   _Suggest working together as a team and using `cache=T` on (b) and (c) given the size of the problem_
+
+      a)  Fit a logistic regression model to the training data with all predictors to predict if an individual will purchase insurance and provide a table of estimates with confidence intervals and any relevant summaries of the model.  Comment on your findings - are there any concerns?
+    
+    b)  Using AIC as a criterion,  find the best subset of predictors using the training data.   _Note:  do not show all ouput from step, but just the final model!_
+     
+```{r}
+car.all = glm(Purchase ~ ., data=Caravan, subset=train, family=binomial)
+pred = predict(car.all, newdata=Caravan[test,], type="response")
+
+table(pred > .25, Caravan[test, "Purchase"])
+```
+     
+     c) Create  a table of estimates with confidence intervals any relevant summaries of the final model. Comment on the findings - which predictors are most important? 
+      
+      d)  Use BIC to find the best subset of predictors using the training data.    If you start BIC at the best AIC model found using step will this result in the same model as if you started at the full model?  _Note:  do not show all ouput from step!_ 
+       
+     e) Create  a table of estimates with confidence intervals any relevant summaries of the final model. Which predictors are most important?  Are all of the variables included here also included in the best AIC model?   Are there any that include zero in the credible (confidence) interval? 
+       
+      f)  For each method, create a  confusion matrix for the classifications on the observed data,  a table where the diagonal elements show how many times the model predicts correctly and the off-diagonal elements indicate miss-classification. Report the missclasification rate for each model.  For creating the predictions, use a cut-off of 0.25.
+     
+```{r}
+table(predict > .25, Caravan[train, "Purchase"])
+```
+     
+
+    g)  Create confusion matrices using the test data.   Which model has the lowest missclassification rate out of sample?  
+    
+    
+    
+    i)  For each method, create an ROC curve  and estimate of AUC (see lab) using the training and test data.  Which method has the best AUC?  Does the method with the best AUC in the training data have the best AUC in the test data?   
+    
+
+    j) The company may be more interested in identifying individuals who will buy insurance.  The sensitivity of the method is based on the number of true positives (i.e. those that we correctly classified as purchasing insurance) divided by the total number of positives that we predicted  (true positives + false negatives).  For each method calculate the sensitivity.  Which would you recommend.
+    
+    k)  Provide a half-page (max) report  briefly describing what you did and your findings for the model that you think is best.  For the five most important variables in your final model report interval estimates of the odds ratios and interpretations in the context of the problem.  
+    
+
+## Using BAS for Subset Selection  (optional)
+
+Notes:  in addition to the packages discussed in ISLR, we can enumerate all possible models or sample models using the package `BAS`.  The resulting objects will be large under enumeration with $p=10$ as there are over 1 million models.
+
+For linear models we can enumerate all models using AIC based on the following code:
+
+```{r bas.aic, eval=FALSE}
+sim.aic = bas.lm(Y ~ . -mu, data=df[train,], method="deterministic",
+                 n.models=2^20, prior="AIC")
+```
+
+Get predictions with the best AIC model  "Highest Posterior Probabilty model = 'HPM' and extract the variables.
+
+```{r,  eval=FALSE}
+pred = predict(sim.aic, newdata = df[-train,], estimator='HPM')
+variable.names(pred)
+```
+
+Find the RMSE
+```{r rmse-bas,  eval=FALSE}
+rmse(df[-train, "Y"], pred$fit)
+```
+
+For BIC, change the prior to 'BIC"; see `help(bas.lm)` for other priors if you want to explore more options.
+
+Now try the above using MCMC,
+
+
+```{r bas.aic.mcmc,  eval=FALSE}
+sim.aic.mcmc = bas.lm(Y ~ . -mu, data=df[train,], method="MCMC",
+                 MCMC.iterations=50000, prior="AIC")
+sim.aic.mcmc$n.Unique
+```
+`n.Unique` is the number of unique models that were sampled using MCMC
+
+```{r}
+diagnostics(sim.aic.mcmc,  eval=FALSE)  # Is there a strong 1:1 relationship suggesting convergence?
+```
+
+
+```{r,  eval=FALSE}
+pred = predict(sim.aic.mcmc, newdata = df[-train,], estimator='HPM')
+variable.names(pred)
+rmse(df[-train, "Y"], pred$fit)
+```
+
+Did you find the same model?
+
+
+
+For glms the syntax is lightly different for specifying which prior to use.
+
+```{r, eval=FALSE}
+set.seed(0)
+test = 1:1000  # as in ISLR Chapter 4
+train = -test
+#start with model formula from AIC stepwise  `step.car`
+car.bas = bas.glm(Purchase ~ ., betaprior=aic.prior(), 
+                  data=Caravan, subset=train,
+                  family=binomial(),
+                  method='MCMC',
+                  MCMC.iterations = 5000)  #short run to check timing
+diagnostics(car.bas)
+image(car.bas)
+
+car.bas = bas.glm(step.car$formula, betaprior=aic.prior(), 
+                  data=Caravan, subset=train,
+                  family=binomial(),
+                  method='MCMC',
+                  MCMC.iterations = 50000)  #longer run to check convergence object takes over 4.3 MB 
+
+diagnostics(car.bas)
+image(car.bas)
+```
+```{r}
+pred = predict(car.bas, newdata=Caravan[-train,], type="response", estimator="HPM")
+
+table(pred$fit > .25, Caravan[-train, "Purchase"])
+```
