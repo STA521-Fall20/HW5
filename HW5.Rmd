@@ -118,7 +118,7 @@ Provide Confidence/prediction intervals for $\beta$, and $\mu$, and $Y$ in the t
 
 
 
-4. Plot the test set RMSE for prediction associated with the best model of each size.   For which model size does the test set RMSE take on its minimum value?  Comment on your results.  If it takes on its minimum value for a model withonly an intercept or a model containing all of the predictors, adjust $\sigma$ used in generating the data until the test set RMSE is minimized for an intermediate point.
+4. Plot the test set RMSE for prediction associated with the best model of each size.   For which model size does the test set RMSE take on its minimum value?  Comment on your results.  If it takes on its minimum value for a model with only an intercept or a model containing all of the predictors, adjust $\sigma$ used in generating the data until the test set RMSE is minimized for an intermediate point.
 
 5.  How does the model at which the test set RMSE is minimized compare to the true model used to generate the data?  Comment on the coefficient values and confidence intervals obtained from using all of the data.  Do the intervals include the true values?
 
@@ -181,6 +181,11 @@ table(predict > .25, Caravan[train, "Purchase"])
     
     k)  Provide a half-page (max) report  briefly describing what you did and your findings for the model that you think is best.  For the five most important variables in your final model report interval estimates of the odds ratios and interpretations in the context of the problem.  
     
+## Theory 
+
+12.  Using the expression for the likelihood for $\beta$ and $\phi$ from lecture on 10/16/2019 and the independent Jeffreys prior $p(\beta, \phi) \propto 1/\phi$ derive the posterior distribution for $\beta \mid Y, \phi$ and $\phi \mid \Y$.   (Check that your answer agrees with results in class)
+
+
 
 ## Using BAS for Subset Selection  (optional)
 
