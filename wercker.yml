@@ -9,4 +9,4 @@ build:
     - script:
         name: Check for allowed files
         code: |
-          Rscript -e "source('https://raw.githubusercontent.com/STA521-F18/hw5/master/HW5_whitelist.R')"
+          Rscript -e "source('https://raw.githubusercontent.com/STA521-F19/hw5/master/HW5_whitelist.R')"
